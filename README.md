@@ -19,6 +19,8 @@ project/
 │
 ├── nikora_discounts.py     # Script for scraping Nikora only
 │
+├── libre_discounts.py     # Script for scraping Libre only
+│
 ├── LICENSE
 │
 ├── .gitignore

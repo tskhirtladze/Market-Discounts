@@ -159,19 +159,176 @@ def scrape_nikora(driver):
 
     return df
 
+def scrape_libre(driver):
+    url = 'https://libre.ge/productebi'
+    driver.get(url)
+    driver.maximize_window()
+    wait = WebDriverWait(driver, 15)
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "p-md-4")))
+
+    # -------- SCROLL TO LOAD ALL PRODUCTS --------
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2.5)
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
+
+    # -------- FIND ALL PRODUCT CARDS --------
+    product_cards = driver.find_elements(By.CSS_SELECTOR, "div.p-md-4 .col-xl-2")
+    data = []
+
+    for card in product_cards:
+        try:
+            title_element = card.find_element(
+                By.CSS_SELECTOR,
+                ".product_card__title .line_2"
+            )
+
+            title = title_element.text.strip()
+        except:
+            title = None
+
+        try:
+            # --- New price: Lari ---
+            new_price_lari = card.find_element(
+                By.CSS_SELECTOR, "div.product_card__new_price_lari"
+            ).text.strip()
+
+            # --- New price: Tetri ---
+            new_price_tetri = card.find_element(
+                By.CSS_SELECTOR, "div.product_card__new_price_tetri"
+            ).text.strip()
+
+            # Combine into a proper decimal price
+            new_price = f"{new_price_lari}.{new_price_tetri}"
+        except:
+            new_price = None
+
+        try:
+            # --- Old price: Lari ---
+            old_price = card.find_element(
+                By.CSS_SELECTOR, "div.product_card__old_price"
+            ).text.strip()
+        except:
+            old_price = None
+
+        # --- Product link ---
+        try:
+            link_element = card.find_element(By.CSS_SELECTOR, "a.link-secondary")
+            product_link = link_element.get_attribute("href")
+            decoded_link = unquote(product_link)
+        except:
+            decoded_link = None
+
+        data.append({
+            "Title": title,
+            "New Price": new_price,
+            "Old Price": old_price,
+            "Product Link": decoded_link
+        })
+
+    return pd.DataFrame(data)
+
+
+def scrape_libre_boom(driver):
+    url = 'https://libre.ge/productebi/boom-price'
+    driver.get(url)
+    driver.maximize_window()
+    wait = WebDriverWait(driver, 15)
+    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "p-md-4")))
+
+    # -------- SCROLL TO LOAD ALL PRODUCTS --------
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2.5)
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
+
+    # -------- FIND ALL PRODUCT CARDS --------
+    product_cards = driver.find_elements(By.CSS_SELECTOR, "div.p-md-4 .col-xl-2")
+    data = []
+
+    for card in product_cards:
+        try:
+            title_element = card.find_element(
+                By.CSS_SELECTOR,
+                ".product_card__title .line_2"
+            )
+
+            title = title_element.text.strip()
+        except:
+            title = None
+
+        try:
+            # --- New price: Lari ---
+            new_price_lari = card.find_element(
+                By.CSS_SELECTOR, "div.product_card__new_price_lari"
+            ).text.strip()
+
+            # --- New price: Tetri ---
+            new_price_tetri = card.find_element(
+                By.CSS_SELECTOR, "div.product_card__new_price_tetri"
+            ).text.strip()
+
+            # Combine into a proper decimal price
+            new_price = f"{new_price_lari}.{new_price_tetri}"
+        except:
+            new_price = None
+
+        try:
+            # --- Old price: Lari ---
+            old_price = card.find_element(
+                By.CSS_SELECTOR, "div.product_card__old_price"
+            ).text.strip()
+        except:
+            old_price = None
+
+        # --- Product link ---
+        try:
+            link_element = card.find_element(By.CSS_SELECTOR, "a.link-secondary")
+            product_link = link_element.get_attribute("href")
+            decoded_link = unquote(product_link)
+        except:
+            decoded_link = None
+
+        data.append({
+            "Title": title,
+            "New Price": new_price,
+            "Old Price": old_price,
+            "Product Link": decoded_link
+        })
+
+    return pd.DataFrame(data)
+
+
+
 if __name__ == "__main__":
     driver = setup_driver()
     try:
         df_2nabiji = scrape_2nabiji(driver)
+        driver.quit()
         time.sleep(2)
         driver = setup_driver()
-
         df_nikora = scrape_nikora(driver)
+        driver.quit()
+
+        driver = setup_driver()
+        df_libre_discounts = scrape_libre(driver)
+        df_libre_boom_discounts = scrape_libre_boom(driver)
+        df_all = pd.concat([df_libre_discounts, df_libre_boom_discounts], ignore_index=True)
+        driver.quit()
 
         # Save both dataframes in one Excel file with different sheets
         with pd.ExcelWriter("market_discounts.xlsx", engine="openpyxl") as writer:
             df_2nabiji.to_excel(writer, sheet_name="2nabiji", index=False)
             df_nikora.to_excel(writer, sheet_name="nikora", index=False)
+            df_all.to_excel(writer, sheet_name="libre", index=False)
 
         print("Scraping finished. Data saved to market_discounts.xlsx")
 
