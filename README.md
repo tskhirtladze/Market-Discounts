@@ -1,5 +1,5 @@
 # Market Discounts Scraper
-This project scrapes product discount data from two markets: **2nabiji.ge** and **Nikora Supermarket**.  
+This project scrapes product discount data from two markets: **2nabiji**, **Nikora** and **Libre** supermarket.  
 The script exports the results into an Excel file with a clean, structured format.
 
 ---
@@ -67,7 +67,7 @@ executable_path = "your/driver/path/chromedriver"
   - old and new prices  
   - product links  
   - product images (2nabiji)  
-- Infinite scroll handling for 2nabiji  
+- Infinite scroll handling for 2nabiji and Libre
 - Pagination handling for Nikora  
 - Cleans and formats text  
 - Saves the results into an Excel file with two sheets
@@ -90,6 +90,7 @@ market_discounts.xlsx
 Sheets created:
 - 2nabiji  
 - nikora
+- libre
 
 ---
 
